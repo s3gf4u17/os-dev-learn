@@ -12,7 +12,7 @@ default: $(TESTS)
 %: %.c
 	@mkdir -p bin
 	@$(GCCPATH64) $< -o bin/$@ $(GCCFLAG) $(patsubst %.o, ../library/x86_64/%.o, $(OBJS))
-	@./bin/$@ && ([ $$? -eq 0 ] && echo "$@`tput setaf 8 && tput bold` SUCCESS`tput sgr0`") || echo "$@`tput setaf 1 && tput bold` FAILURE`tput sgr0`"
+	@./bin/$@ && ([ $$? -eq 0 ] && echo "$@`tput setaf 8 && tput bold` SUCCESS`tput sgr0`") || echo "$@`tput setaf 1 && tput bold` FAILURE $$?`tput sgr0`"
 
 clean:
 	rm -rf bin
