@@ -1,18 +1,29 @@
 TARGET=i686-elf
 PREFIX=$(shell pwd)/opt/cross
 
-.PHONY: dependencies
-dependencies:
-	sudo apt install build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libisl-dev -y
-	@printf "`tput setaf 10 bold`CHECK INSTALLED DEPENDENCIES VERSIONS`tput sgr0`\n"
-	@dpkg -l | grep -e 'libgmp3-dev' -e 'libmpc-dev' -e 'libmpfr-dev' -e 'libisl-dev' -e 'texinfo'
-	@ld --version
-	@gcc --version
-	@bison --version
-	@flex --version
-	sudo apt install qemu-system-x86 -y # vm for testing
+library: library/*
+	cd library && make --always-make
 
-.PHONY: environment
+tests: tests/*
+	cd tests && make --always-make
+
+dependencies:
+	sudo apt install\
+		build-essential\
+		bison\
+		flex\
+		libgmp3-dev\
+		libmpc-dev\
+		libmpfr-dev\
+		texinfo\
+		libisl-dev\
+		qemu-system-x86
+
+clean:
+	rm -rf tmp/ opt/
+	cd library && make clean --always-make
+	cd tests && make clean --always-make
+
 environment:
 	@printf "`tput setaf 10 bold`Getting Binutils 2.43 source code`tput sgr0`\n"
 	wget https://ftp.gnu.org/gnu/binutils/binutils-2.43.tar.xz --directory-prefix=tmp/
@@ -33,17 +44,11 @@ environment:
 	@rm -rf tmp/
 	@printf "`tput setaf 15 setab 25 bold` FINISHED `tput sgr0`\n"
 
-.PHONY: cleanup
-cleanup:
-	@rm -rf tmp/ opt/ *.o *.bin
-
-.PHONY: build
 build:
 	rm -rf build/ && mkdir build
 	opt/cross/bin/i686-elf-as src/boot.s -o build/boot.o
 	opt/cross/bin/i686-elf-gcc -c src/kernel.c -o build/kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 	opt/cross/bin/i686-elf-gcc -T src/linker.ld -o build/myos.bin -ffreestanding -O2 -nostdlib build/boot.o build/kernel.o -lgcc
 
-.PHONY: run
 run: build
 	qemu-system-i386 -kernel build/myos.bin
